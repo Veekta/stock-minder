@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const bcrypt = require("bcrypt");
 
 const userSchema = mongoose.Schema(
   {
@@ -20,15 +21,15 @@ const userSchema = mongoose.Schema(
       type: String,
       required: [true, "Please add a password"],
       minLength: [6, "Password must be up to 6 characters"],
-      maxLength: [23, "Password must not be more than 23 characters"],
+      // maxLength: [23, "Password must not be more than 23 characters"],
     },
     photo: {
       type: String,
-      require: [true, "Please add a photo"],
+      required: [true, "Please add a photo"],
       default:
         "https://e7.pngegg.com/pngimages/442/477/png-clipart-computer-icons-user-profile-avatar-profile-heroes-profile.png",
     },
-    photo: {
+    phone: {
       type: String,
       default: "+234",
     },
@@ -40,6 +41,19 @@ const userSchema = mongoose.Schema(
   },
   { timestamps: true }
 );
+
+//encrypt password before saving to db
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) {
+    return next();
+  }
+
+  //hashpassword
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(this.password, salt);
+  this.password = hashedPassword;
+  next();
+});
 
 const User = mongoose.model("User", userSchema);
 
